@@ -23,13 +23,14 @@ _DEMO_PANEL_SCRIPT = r"""(function () {
   const TOGGLE_BUTTON_ID = 'browser-use-demo-toggle';
   const MAX_MESSAGES = 100;
   const EXPANDED_IDS_KEY = '__browserUseExpandedEntries__';
+  const QUERY_KEY = '__browserUseDemoQuery__';
   const LEVEL_ICONS = {
-    info: 'ℹ️',
-    action: '▶️',
-    thought: '💭',
-    success: '✅',
-    warning: '⚠️',
-    error: '❌',
+    info: '[i]',
+    action: '[>]',
+    thought: '[?]',
+    success: '[+]',
+    warning: '[!]',
+    error: '[X]',
   };
   const LEVEL_LABELS = {
     info: 'info',
@@ -75,7 +76,6 @@ _DEMO_PANEL_SCRIPT = r"""(function () {
     if (!hydrateFromStoredMarkup()) {
       state.messages.forEach((entry) => appendEntry(entry, false));
     }
-    attachCloseHandler();
     if (state.isOpen) {
       openPanel(false);
     } else {
@@ -125,14 +125,14 @@ _DEMO_PANEL_SCRIPT = r"""(function () {
         height: 100vh;
         display: flex;
         flex-direction: column;
-        background: #05070d;
-        color: #f8f9ff;
-        font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', 'Menlo', monospace;
+        background: #000000;
+        color: #00ff00;
+        font-family: 'Courier New', 'Courier', monospace;
         font-size: 13px;
         line-height: 1.4;
-        box-shadow: -6px 0 25px rgba(0, 0, 0, 0.35);
+        box-shadow: -6px 0 25px rgba(0, 255, 0, 0.3);
         z-index: 2147480000;
-        border-left: 1px solid rgba(255, 255, 255, 0.14);
+        border-left: 1px solid #00ff00;
         backdrop-filter: blur(10px);
         pointer-events: auto;
         transform: translateX(0);
@@ -148,7 +148,7 @@ _DEMO_PANEL_SCRIPT = r"""(function () {
 
       #${PANEL_ID} .browser-use-demo-header {
         padding: 16px 18px 12px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+        border-bottom: 1px solid #00ff00;
         display: flex;
         align-items: baseline;
         justify-content: space-between;
@@ -161,17 +161,17 @@ _DEMO_PANEL_SCRIPT = r"""(function () {
         text-transform: uppercase;
         letter-spacing: 0.12em;
         margin: 0;
-        color: #f8f9ff;
+        color: #00ff00;
       }
 
       #${PANEL_ID} .browser-use-badge {
         font-size: 11px;
         padding: 2px 10px;
-        border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 0;
+        border: 1px solid #00ff00;
         text-transform: uppercase;
         letter-spacing: 0.08em;
-        color: #f8f9ff;
+        color: #00ff00;
       }
 
       #${PANEL_ID} .browser-use-logo img {
@@ -188,10 +188,10 @@ _DEMO_PANEL_SCRIPT = r"""(function () {
       #${PANEL_ID} .browser-use-close-btn {
         width: 28px;
         height: 28px;
-        border-radius: 50%;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        background: rgba(255, 255, 255, 0.05);
-        color: #f8f9ff;
+        border-radius: 0;
+        border: 1px solid #00ff00;
+        background: #000000;
+        color: #00ff00;
         cursor: pointer;
         font-size: 16px;
         line-height: 1;
@@ -202,16 +202,48 @@ _DEMO_PANEL_SCRIPT = r"""(function () {
       }
 
       #${PANEL_ID} .browser-use-close-btn:hover {
-        background: rgba(255, 255, 255, 0.15);
-        border-color: rgba(255, 255, 255, 0.35);
+        background: #003300;
+        border-color: #00ff00;
+      }
+
+      #${PANEL_ID} .browser-use-query-header {
+        padding: 12px 18px;
+        border-bottom: 1px solid #00ff00;
+        background: #000000;
+        font-size: 12px;
+        line-height: 1.5;
+        color: #00ff00;
+        word-wrap: break-word;
+        max-height: 150px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #00ff00 #000000;
+      }
+
+      #${PANEL_ID} .browser-use-query-header::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      #${PANEL_ID} .browser-use-query-header::-webkit-scrollbar-thumb {
+        background: #00ff00;
+        border-radius: 0;
+      }
+
+      #${PANEL_ID} .browser-use-query-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #00ff00;
+        margin-bottom: 6px;
+        opacity: 0.7;
       }
 
       #${PANEL_ID} .browser-use-demo-body {
         flex: 1;
         overflow-y: auto;
         scrollbar-width: thin;
-        scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
-        padding: 8px 0 12px;
+        scrollbar-color: #00ff00 #000000;
+        padding: 12px 0 12px;
       }
 
       #${PANEL_ID} .browser-use-demo-body::-webkit-scrollbar {
@@ -219,8 +251,8 @@ _DEMO_PANEL_SCRIPT = r"""(function () {
       }
 
       #${PANEL_ID} .browser-use-demo-body::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.25);
-        border-radius: 999px;
+        background: #00ff00;
+        border-radius: 0;
       }
 
       .browser-use-demo-entry {
@@ -228,7 +260,7 @@ _DEMO_PANEL_SCRIPT = r"""(function () {
         gap: 12px;
         padding: 10px 18px;
         border-left: 2px solid transparent;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        border-bottom: 1px solid #003300;
         animation: browser-use-fade-in 0.25s ease;
         background: #000000;
       }
@@ -252,18 +284,16 @@ _DEMO_PANEL_SCRIPT = r"""(function () {
         font-size: 11px;
         letter-spacing: 0.08em;
         text-transform: uppercase;
-        color: white;
+        color: #00ff00;
         margin-bottom: 4px;
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
+        display: none;
       }
 
       .browser-use-entry-message {
         margin: 0;
         word-break: break-word;
         font-size: 12px;
-        color: #f8f9ff;
+        color: #00ff00;
         display: flex;
         flex-direction: column;
         gap: 6px;
@@ -287,7 +317,7 @@ _DEMO_PANEL_SCRIPT = r"""(function () {
       .browser-use-markdown-content h3 {
         margin: 8px 0 4px 0;
         font-weight: 600;
-        color: #f8f9ff;
+        color: #00ff00;
       }
 
       .browser-use-markdown-content h1 {
@@ -303,27 +333,27 @@ _DEMO_PANEL_SCRIPT = r"""(function () {
       }
 
       .browser-use-markdown-content code {
-        background: rgba(255, 255, 255, 0.1);
+        background: #001100;
         padding: 2px 6px;
-        border-radius: 3px;
-        font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', 'Menlo', monospace;
+        border-radius: 0;
+        font-family: 'Courier New', 'Courier', monospace;
         font-size: 11px;
-        color: #60a5fa;
+        color: #00ff00;
       }
 
       .browser-use-markdown-content pre {
-        background: rgba(0, 0, 0, 0.3);
+        background: #001100;
         padding: 8px 12px;
-        border-radius: 4px;
+        border-radius: 0;
         overflow-x: auto;
         margin: 8px 0;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid #00ff00;
       }
 
       .browser-use-markdown-content pre code {
         background: transparent;
         padding: 0;
-        color: #f8f9ff;
+        color: #00ff00;
         font-size: 11px;
         white-space: pre;
       }
@@ -339,46 +369,38 @@ _DEMO_PANEL_SCRIPT = r"""(function () {
       }
 
       .browser-use-markdown-content a {
-        color: #60a5fa;
+        color: #00ff00;
         text-decoration: underline;
       }
 
       .browser-use-markdown-content a:hover {
-        color: #93c5fd;
+        color: #00cc00;
       }
 
       .browser-use-markdown-content strong {
         font-weight: 600;
-        color: #f8f9ff;
+        color: #00ff00;
       }
 
       .browser-use-markdown-content em {
         font-style: italic;
       }
 
-      .browser-use-demo-entry:not(.expanded) .browser-use-markdown-content {
-        max-height: 120px;
-        overflow: hidden;
-        mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
+      .browser-use-demo-entry .browser-use-markdown-content {
+        max-height: none;
+        overflow: visible;
       }
 
       .browser-use-entry-toggle {
-        align-self: flex-start;
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: #f8f9ff;
-        padding: 2px 10px;
-        font-size: 11px;
-        border-radius: 999px;
-        cursor: pointer;
+        display: none;
       }
 
-      .browser-use-demo-entry.level-info { border-left-color: #60a5fa; }
-      .browser-use-demo-entry.level-action { border-left-color: #34d399; }
-      .browser-use-demo-entry.level-thought { border-left-color: #f97316; }
-      .browser-use-demo-entry.level-warning { border-left-color: #fbbf24; }
-      .browser-use-demo-entry.level-success { border-left-color: #22c55e; }
-      .browser-use-demo-entry.level-error { border-left-color: #f87171; }
+      .browser-use-demo-entry.level-info { border-left-color: #00ff00; }
+      .browser-use-demo-entry.level-action { border-left-color: #00ff00; }
+      .browser-use-demo-entry.level-thought { border-left-color: #00ff00; }
+      .browser-use-demo-entry.level-warning { border-left-color: #00ff00; }
+      .browser-use-demo-entry.level-success { border-left-color: #00ff00; }
+      .browser-use-demo-entry.level-error { border-left-color: #00ff00; }
 
       @keyframes browser-use-fade-in {
         from { opacity: 0; transform: translateY(6px); }
@@ -400,23 +422,23 @@ _DEMO_PANEL_SCRIPT = r"""(function () {
         right: 20px;
         width: 44px;
         height: 44px;
-        border-radius: 50%;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        background: rgba(5, 7, 13, 0.92);
-        color: #f8f9ff;
+        border-radius: 0;
+        border: 1px solid #00ff00;
+        background: #000000;
+        color: #00ff00;
         font-size: 18px;
         display: none;
         align-items: center;
         justify-content: center;
         cursor: pointer;
         z-index: 2147480001;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        box-shadow: 0 8px 20px rgba(0, 255, 0, 0.4);
         transition: transform 0.2s ease, background 0.2s ease;
       }
 
       #${TOGGLE_BUTTON_ID}:hover {
         transform: scale(1.05);
-        background: rgba(5, 7, 13, 0.98);
+        background: #003300;
       }
 
       #${TOGGLE_BUTTON_ID} img {
@@ -440,33 +462,27 @@ _DEMO_PANEL_SCRIPT = r"""(function () {
     panel.setAttribute('aria-label', 'Browser-use demo panel');
     panel.setAttribute(EXCLUDE_ATTR, 'true');
 
-    const header = document.createElement('header');
-    header.className = 'browser-use-demo-header';
-    const title = document.createElement('div');
-    title.className = 'browser-use-logo';
-    const logo = document.createElement('img');
-    logo.src = 'https://raw.githubusercontent.com/browser-use/browser-use/main/static/browser-use-dark.png';
-    logo.alt = 'Browser-use';
-    logo.loading = 'lazy';
-    title.appendChild(logo);
-    const actions = document.createElement('div');
-    actions.className = 'browser-use-header-actions';
-    const closeBtn = document.createElement('button');
-    closeBtn.type = 'button';
-    closeBtn.className = 'browser-use-close-btn';
-    closeBtn.setAttribute(EXCLUDE_ATTR, 'true');
-    closeBtn.setAttribute('aria-label', 'Hide demo panel');
-    closeBtn.dataset.role = 'close-toggle';
-    closeBtn.innerHTML = '&times;';
-    actions.appendChild(closeBtn);
-    header.appendChild(title);
-    header.appendChild(actions);
+    const queryHeader = document.createElement('div');
+    queryHeader.className = 'browser-use-query-header';
+    queryHeader.setAttribute('data-role', 'query-header');
+    queryHeader.setAttribute(EXCLUDE_ATTR, 'true');
+
+    const queryLabel = document.createElement('div');
+    queryLabel.className = 'browser-use-query-label';
+    queryLabel.textContent = '> QUERY';
+
+    const queryText = document.createElement('div');
+    queryText.setAttribute('data-role', 'query-text');
+    queryText.textContent = loadQuery() || 'Initializing...';
+
+    queryHeader.appendChild(queryLabel);
+    queryHeader.appendChild(queryText);
 
     const body = document.createElement('div');
     body.className = 'browser-use-demo-body';
     body.setAttribute('data-role', 'log-list');
 
-    panel.appendChild(header);
+    panel.appendChild(queryHeader);
     panel.appendChild(body);
     panel.setAttribute('data-open', 'true');
     return panel;
@@ -489,12 +505,6 @@ _DEMO_PANEL_SCRIPT = r"""(function () {
     return button;
   }
 
-  function attachCloseHandler() {
-    const closeBtn = state.panel?.querySelector('[data-role="close-toggle"]');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', () => closePanel(true));
-    }
-  }
 
   function openPanel(saveState = true) {
     state.isOpen = true;
@@ -580,6 +590,31 @@ _DEMO_PANEL_SCRIPT = r"""(function () {
     }
   }
 
+  function loadQuery() {
+    try {
+      return sessionStorage.getItem(QUERY_KEY) || null;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function saveQuery(query) {
+    try {
+      sessionStorage.setItem(QUERY_KEY, query);
+    } catch (err) {
+      // Ignore storage errors
+    }
+  }
+
+  function updateQueryDisplay(query) {
+    if (!state.panel) return;
+    const queryText = state.panel.querySelector('[data-role="query-text"]');
+    if (queryText) {
+      queryText.textContent = stripEmojis(query);
+      saveQuery(stripEmojis(query));
+    }
+  }
+
   function restoreMessages() {
     try {
       const raw = sessionStorage.getItem(STORAGE_KEY);
@@ -626,10 +661,54 @@ _DEMO_PANEL_SCRIPT = r"""(function () {
     return false;
   }
 
+  function stripEmojis(text) {
+    // Remove all emojis and other unicode symbols
+    return text.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA00}-\u{1FA6F}]|[\u{1FA70}-\u{1FAFF}]|[\u{FE00}-\u{FE0F}]|[\u{1F000}-\u{1F02F}]|[\u{1F0A0}-\u{1F0FF}]|[\u{E0020}-\u{E007F}]/gu, '');
+  }
+
+  function truncateText(text, maxLength = 300) {
+    if (text.length <= maxLength) {
+      return text;
+    }
+    return text.substring(0, maxLength) + '...';
+  }
+
+  function stripTechnicalDetails(text) {
+    // Remove patterns like (index 6740) or (value="SYC") or (id=123)
+    return text
+      .replace(/\(index\s+\d+\)/gi, '')
+      .replace(/\(value\s*=\s*['""][^)]*['"]\)/gi, '')
+      .replace(/\(value\s*=\s*[^)]*\)/gi, '')
+      .replace(/\(id\s*=\s*[^)]*\)/gi, '')
+      .replace(/\(xpath\s*=\s*[^)]*\)/gi, '')
+      .replace(/\(selector\s*=\s*[^)]*\)/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function stripCredentials(text) {
+    // Remove email addresses
+    text = text.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '[EMAIL_REDACTED]');
+
+    // Remove password patterns (common formats)
+    text = text.replace(/password[:\s]+[^\s,;.]+/gi, 'password: [REDACTED]');
+    text = text.replace(/pass[:\s]+[^\s,;.]+/gi, 'pass: [REDACTED]');
+    text = text.replace(/pwd[:\s]+[^\s,;.]+/gi, 'pwd: [REDACTED]');
+
+    // Remove quoted passwords/credentials
+    text = text.replace(/["'][^"']*[&%$#@!]{2,}[^"']*["']/g, '[REDACTED]');
+
+    return text;
+  }
+
   function normalizeEntry(detail) {
     if (!detail) return null;
     const entry = typeof detail === 'string' ? { message: detail } : { ...detail };
     entry.message = typeof entry.message === 'string' ? entry.message : JSON.stringify(entry.message ?? '');
+    entry.message = stripEmojis(entry.message);
+    entry.message = stripCredentials(entry.message);
+    entry.message = stripTechnicalDetails(entry.message);
+    entry.message = truncateText(entry.message, 300);
     entry.level = (entry.level || 'info').toLowerCase();
     if (!LEVEL_ICONS[entry.level]) {
       entry.level = 'info';
@@ -665,7 +744,7 @@ _DEMO_PANEL_SCRIPT = r"""(function () {
 
   function createEntryNode(entry) {
     const row = document.createElement('article');
-    row.className = `browser-use-demo-entry level-${entry.level}`;
+    row.className = `browser-use-demo-entry level-${entry.level} expanded`;
     row.setAttribute('data-id', entry.id);
 
     const icon = document.createElement('span');
@@ -674,12 +753,6 @@ _DEMO_PANEL_SCRIPT = r"""(function () {
 
     const content = document.createElement('div');
     content.className = 'browser-use-entry-content';
-
-    const meta = document.createElement('div');
-    meta.className = 'browser-use-entry-meta';
-    const time = formatTime(entry.timestamp);
-    const label = LEVEL_LABELS[entry.level] || entry.level;
-    meta.innerHTML = `<span>${time}</span><span>${label}</span>`;
 
     const messageWrapper = document.createElement('div');
     messageWrapper.className = 'browser-use-entry-message';
@@ -690,19 +763,6 @@ _DEMO_PANEL_SCRIPT = r"""(function () {
     message.textContent = messageHtml;
     messageWrapper.appendChild(message);
 
-    if (messageText.length > 160) {
-      const toggle = document.createElement('button');
-      toggle.type = 'button';
-      toggle.className = 'browser-use-entry-toggle';
-      toggle.setAttribute(EXCLUDE_ATTR, 'true');
-      toggle.textContent = 'Expand';
-      toggle.addEventListener('click', () => toggleEntryExpansion(row, toggle, entry.id));
-      messageWrapper.appendChild(toggle);
-    } else {
-      row.classList.add('expanded');
-    }
-
-    content.appendChild(meta);
     content.appendChild(messageWrapper);
     row.appendChild(icon);
     row.appendChild(content);
@@ -767,6 +827,13 @@ _DEMO_PANEL_SCRIPT = r"""(function () {
     appendEntry(entry, true);
   }
 
+  function handleQueryEvent(event) {
+    const query = event?.detail?.query;
+    if (query) {
+      updateQueryDisplay(query);
+    }
+  }
+
   const boot = () => {
     if (window.__browserUseDemoPanelBootstrapped) {
       return;
@@ -793,6 +860,7 @@ _DEMO_PANEL_SCRIPT = r"""(function () {
     boot();
   }
   window.addEventListener('browser-use-log', handleLogEvent);
+  window.addEventListener('browser-use-query', handleQueryEvent);
 })();
 """
 
@@ -841,6 +909,43 @@ class DemoMode:
 			await self._inject_into_open_pages(script)
 			self._panel_ready = True
 			self.logger.debug('Demo overlay injected successfully')
+
+	async def send_query(self, query: str) -> None:
+		"""Send the query/task to the in-browser panel."""
+		if not query or not self.session.browser_profile.demo_mode:
+			return
+
+		try:
+			await self.ensure_ready()
+		except Exception as exc:
+			self.logger.warning(f'Failed to ensure demo mode is ready: {exc}')
+			return
+
+		if self.session.agent_focus_target_id is None:
+			self.logger.debug('Cannot send demo query: no active target')
+			return
+
+		payload = {'query': query}
+		script = f"""
+(() => {{
+	const detail = {json.dumps(payload, ensure_ascii=False)};
+	const event = new CustomEvent('browser-use-query', {{ detail }});
+	window.dispatchEvent(event);
+}})();
+""".strip()
+
+		try:
+			session = await self.session.get_or_create_cdp_session(target_id=None, focus=False)
+		except Exception as exc:
+			self.logger.debug(f'Cannot acquire CDP session for demo query: {exc}')
+			return
+
+		try:
+			await session.cdp_client.send.Runtime.evaluate(
+				params={'expression': script, 'awaitPromise': False}, session_id=session.session_id
+			)
+		except Exception as exc:
+			self.logger.debug(f'Failed to send demo query: {exc}')
 
 	async def send_log(self, message: str, level: str = 'info', metadata: dict[str, Any] | None = None) -> None:
 		"""Send a log entry to the in-browser panel."""

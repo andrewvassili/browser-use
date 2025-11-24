@@ -641,7 +641,7 @@ class BrowserProfile(BrowserConnectArgs, BrowserLaunchPersistentContextArgs, Bro
 	)
 	paint_order_filtering: bool = Field(default=True, description='Enable paint order filtering. Slightly experimental.')
 	interaction_highlight_color: str = Field(
-		default='rgb(255, 127, 39)',
+		default='rgb(0, 255, 0)',
 		description='Color to use for highlighting elements during interactions (CSS color string).',
 	)
 	interaction_highlight_duration: float = Field(default=1.0, description='Duration in seconds to show interaction highlights.')
@@ -782,6 +782,67 @@ class BrowserProfile(BrowserConnectArgs, BrowserLaunchPersistentContextArgs, Bro
 	def model_post_init(self, __context: Any) -> None:
 		"""Called after model initialization to set up display configuration."""
 		self.detect_display_configuration()
+		self._setup_search_engine_preferences()
+
+	def _setup_search_engine_preferences(self) -> None:
+		"""Set up Chrome preferences to use Google as the default search engine."""
+		import json
+		from pathlib import Path
+
+		if not self.user_data_dir:
+			return
+
+		# Build path to Preferences file
+		prefs_path = Path(self.user_data_dir) / self.profile_directory / 'Preferences'
+
+		# Create the profile directory if it doesn't exist
+		prefs_path.parent.mkdir(parents=True, exist_ok=True)
+
+		# Read existing preferences or create new ones
+		if prefs_path.exists():
+			try:
+				with open(prefs_path, 'r', encoding='utf-8') as f:
+					prefs = json.load(f)
+			except Exception as e:
+				logger.debug(f'Could not read existing Preferences file: {e}')
+				prefs = {}
+		else:
+			prefs = {}
+
+		# Set Google as the default search engine
+		# Chrome preferences for default search provider
+		default_search_provider = {
+			'enabled': True,
+			'name': 'Google',
+			'keyword': 'google.com',
+			'search_url': 'https://www.google.com/search?q={searchTerms}',
+			'suggest_url': 'https://www.google.com/complete/search?output=chrome&q={searchTerms}',
+			'new_tab_url': 'https://www.google.com/webhp',
+			'favicon_url': 'https://www.google.com/favicon.ico',
+			'encoding': 'UTF-8',
+			'id': 1,  # Google's prepopulated search engine ID
+		}
+
+		if 'default_search_provider_data' not in prefs:
+			prefs['default_search_provider_data'] = {}
+
+		prefs['default_search_provider_data'].update({
+			'template_url_data': default_search_provider
+		})
+
+		# Also set in the main default_search_provider section
+		if 'default_search_provider' not in prefs:
+			prefs['default_search_provider'] = {}
+
+		prefs['default_search_provider'].update(default_search_provider)
+
+		# Write preferences back
+		try:
+			with open(prefs_path, 'w', encoding='utf-8') as f:
+				json.dump(prefs, f, indent=2)
+			logger.debug('[BrowserProfile] ✅ Set Google as default search engine')
+		except Exception as e:
+			logger.debug(f'[BrowserProfile] Could not write Preferences file: {e}')
 
 	def get_args(self) -> list[str]:
 		"""Get the list of all Chrome CLI launch args for this profile (compiled from defaults, user-provided, and system-specific)."""

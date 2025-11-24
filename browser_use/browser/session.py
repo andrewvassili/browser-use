@@ -2214,100 +2214,115 @@ class BrowserSession(BaseModel):
 				self.logger.debug(f'No coordinates found for backend node {node.backend_node_id}')
 				return
 
-			# Create animated corner brackets that start offset and animate inward
+			# Create circle with crosshairs targeting effect
 			script = f"""
 			(function() {{
 				const rect = {json.dumps({'x': rect.x, 'y': rect.y, 'width': rect.width, 'height': rect.height})};
 				const color = {json.dumps(color)};
 				const duration = {duration_ms};
 
-				// Scale corner size based on element dimensions to ensure gaps between corners
-				const maxCornerSize = 20;
-				const minCornerSize = 8;
-				const cornerSize = Math.max(
-					minCornerSize,
-					Math.min(maxCornerSize, Math.min(rect.width, rect.height) * 0.35)
-				);
-				const borderWidth = 3;
-				const startOffset = 10; // Starting offset in pixels
-				const finalOffset = -3; // Final position slightly outside the element
-
 				// Get current scroll position
 				const scrollX = window.pageXOffset || document.documentElement.scrollLeft || 0;
 				const scrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
 
-				// Create container for all corners
+				// Calculate center of element
+				const centerX = rect.x + rect.width / 2;
+				const centerY = rect.y + rect.height / 2;
+
+				// Create container for crosshairs
 				const container = document.createElement('div');
 				container.setAttribute('data-browser-use-interaction-highlight', 'true');
 				container.style.cssText = `
 					position: absolute;
-					left: ${{rect.x + scrollX}}px;
-					top: ${{rect.y + scrollY}}px;
-					width: ${{rect.width}}px;
-					height: ${{rect.height}}px;
+					left: ${{centerX + scrollX}}px;
+					top: ${{centerY + scrollY}}px;
+					width: 0;
+					height: 0;
 					pointer-events: none;
 					z-index: 2147483647;
 				`;
 
-				// Create 4 corner brackets
-				const corners = [
-					{{ pos: 'top-left', startX: -startOffset, startY: -startOffset, finalX: finalOffset, finalY: finalOffset }},
-					{{ pos: 'top-right', startX: startOffset, startY: -startOffset, finalX: -finalOffset, finalY: finalOffset }},
-					{{ pos: 'bottom-left', startX: -startOffset, startY: startOffset, finalX: finalOffset, finalY: -finalOffset }},
-					{{ pos: 'bottom-right', startX: startOffset, startY: startOffset, finalX: -finalOffset, finalY: -finalOffset }}
-				];
+				// Calculate circle size based on element dimensions
+				const circleRadius = Math.max(20, Math.min(40, Math.min(rect.width, rect.height) * 0.6));
 
-				corners.forEach(corner => {{
-					const bracket = document.createElement('div');
-					bracket.style.cssText = `
-						position: absolute;
-						width: ${{cornerSize}}px;
-						height: ${{cornerSize}}px;
-						pointer-events: none;
-						transition: all 0.15s ease-out;
-					`;
+				// Create outer circle
+				const circle = document.createElement('div');
+				circle.style.cssText = `
+					position: absolute;
+					left: 50%;
+					top: 50%;
+					width: ${{circleRadius * 2}}px;
+					height: ${{circleRadius * 2}}px;
+					transform: translate(-50%, -50%) scale(0);
+					border: 2px solid ${{color}};
+					border-radius: 50%;
+					pointer-events: none;
+					transition: transform 0.15s ease-out, opacity 0.3s ease-out;
+				`;
 
-					// Position corners
-					if (corner.pos === 'top-left') {{
-						bracket.style.top = '0';
-						bracket.style.left = '0';
-						bracket.style.borderTop = `${{borderWidth}}px solid ${{color}}`;
-						bracket.style.borderLeft = `${{borderWidth}}px solid ${{color}}`;
-						bracket.style.transform = `translate(${{corner.startX}}px, ${{corner.startY}}px)`;
-					}} else if (corner.pos === 'top-right') {{
-						bracket.style.top = '0';
-						bracket.style.right = '0';
-						bracket.style.borderTop = `${{borderWidth}}px solid ${{color}}`;
-						bracket.style.borderRight = `${{borderWidth}}px solid ${{color}}`;
-						bracket.style.transform = `translate(${{corner.startX}}px, ${{corner.startY}}px)`;
-					}} else if (corner.pos === 'bottom-left') {{
-						bracket.style.bottom = '0';
-						bracket.style.left = '0';
-						bracket.style.borderBottom = `${{borderWidth}}px solid ${{color}}`;
-						bracket.style.borderLeft = `${{borderWidth}}px solid ${{color}}`;
-						bracket.style.transform = `translate(${{corner.startX}}px, ${{corner.startY}}px)`;
-					}} else if (corner.pos === 'bottom-right') {{
-						bracket.style.bottom = '0';
-						bracket.style.right = '0';
-						bracket.style.borderBottom = `${{borderWidth}}px solid ${{color}}`;
-						bracket.style.borderRight = `${{borderWidth}}px solid ${{color}}`;
-						bracket.style.transform = `translate(${{corner.startX}}px, ${{corner.startY}}px)`;
-					}}
+				// Create horizontal crosshair
+				const crosshairH = document.createElement('div');
+				crosshairH.style.cssText = `
+					position: absolute;
+					left: 50%;
+					top: 50%;
+					width: ${{circleRadius * 3}}px;
+					height: 2px;
+					transform: translate(-50%, -50%) scaleX(0);
+					background: ${{color}};
+					pointer-events: none;
+					transition: transform 0.15s ease-out, opacity 0.3s ease-out;
+				`;
 
-					container.appendChild(bracket);
+				// Create vertical crosshair
+				const crosshairV = document.createElement('div');
+				crosshairV.style.cssText = `
+					position: absolute;
+					left: 50%;
+					top: 50%;
+					width: 2px;
+					height: ${{circleRadius * 3}}px;
+					transform: translate(-50%, -50%) scaleY(0);
+					background: ${{color}};
+					pointer-events: none;
+					transition: transform 0.15s ease-out, opacity 0.3s ease-out;
+				`;
 
-					// Animate to final position slightly outside the element
-					setTimeout(() => {{
-						bracket.style.transform = `translate(${{corner.finalX}}px, ${{corner.finalY}}px)`;
-					}}, 10);
-				}});
+				// Create center dot
+				const dot = document.createElement('div');
+				dot.style.cssText = `
+					position: absolute;
+					left: 50%;
+					top: 50%;
+					width: 6px;
+					height: 6px;
+					transform: translate(-50%, -50%) scale(0);
+					background: ${{color}};
+					border-radius: 50%;
+					pointer-events: none;
+					transition: transform 0.2s ease-out, opacity 0.3s ease-out;
+				`;
 
+				container.appendChild(circle);
+				container.appendChild(crosshairH);
+				container.appendChild(crosshairV);
+				container.appendChild(dot);
 				document.body.appendChild(container);
+
+				// Animate in
+				setTimeout(() => {{
+					circle.style.transform = 'translate(-50%, -50%) scale(1)';
+					crosshairH.style.transform = 'translate(-50%, -50%) scaleX(1)';
+					crosshairV.style.transform = 'translate(-50%, -50%) scaleY(1)';
+					dot.style.transform = 'translate(-50%, -50%) scale(1)';
+				}}, 10);
 
 				// Auto-remove after duration
 				setTimeout(() => {{
-					container.style.opacity = '0';
-					container.style.transition = 'opacity 0.3s ease-out';
+					circle.style.opacity = '0';
+					crosshairH.style.opacity = '0';
+					crosshairV.style.opacity = '0';
+					dot.style.opacity = '0';
 					setTimeout(() => container.remove(), 300);
 				}}, duration);
 
@@ -2375,48 +2390,79 @@ class BrowserSession(BaseModel):
 				const outerCircle = document.createElement('div');
 				outerCircle.style.cssText = `
 					position: absolute;
-					left: -15px;
-					top: -15px;
-					width: 30px;
-					height: 30px;
-					border: 3px solid ${{color}};
+					left: 50%;
+					top: 50%;
+					width: 40px;
+					height: 40px;
+					transform: translate(-50%, -50%) scale(0);
+					border: 2px solid ${{color}};
 					border-radius: 50%;
-					opacity: 0;
-					transform: scale(0.3);
-					transition: all 0.2s ease-out;
+					pointer-events: none;
+					transition: transform 0.15s ease-out, opacity 0.3s ease-out;
 				`;
-				container.appendChild(outerCircle);
+
+				// Create horizontal crosshair
+				const crosshairH = document.createElement('div');
+				crosshairH.style.cssText = `
+					position: absolute;
+					left: 50%;
+					top: 50%;
+					width: 60px;
+					height: 2px;
+					transform: translate(-50%, -50%) scaleX(0);
+					background: ${{color}};
+					pointer-events: none;
+					transition: transform 0.15s ease-out, opacity 0.3s ease-out;
+				`;
+
+				// Create vertical crosshair
+				const crosshairV = document.createElement('div');
+				crosshairV.style.cssText = `
+					position: absolute;
+					left: 50%;
+					top: 50%;
+					width: 2px;
+					height: 60px;
+					transform: translate(-50%, -50%) scaleY(0);
+					background: ${{color}};
+					pointer-events: none;
+					transition: transform 0.15s ease-out, opacity 0.3s ease-out;
+				`;
 
 				// Create center dot
 				const centerDot = document.createElement('div');
 				centerDot.style.cssText = `
 					position: absolute;
-					left: -4px;
-					top: -4px;
-					width: 8px;
-					height: 8px;
+					left: 50%;
+					top: 50%;
+					width: 6px;
+					height: 6px;
+					transform: translate(-50%, -50%) scale(0);
 					background: ${{color}};
 					border-radius: 50%;
-					opacity: 0;
-					transform: scale(0);
-					transition: all 0.15s ease-out;
+					pointer-events: none;
+					transition: transform 0.2s ease-out, opacity 0.3s ease-out;
 				`;
-				container.appendChild(centerDot);
 
+				container.appendChild(outerCircle);
+				container.appendChild(crosshairH);
+				container.appendChild(crosshairV);
+				container.appendChild(centerDot);
 				document.body.appendChild(container);
 
 				// Animate in
 				setTimeout(() => {{
-					outerCircle.style.opacity = '0.8';
-					outerCircle.style.transform = 'scale(1)';
-					centerDot.style.opacity = '1';
-					centerDot.style.transform = 'scale(1)';
+					outerCircle.style.transform = 'translate(-50%, -50%) scale(1)';
+					crosshairH.style.transform = 'translate(-50%, -50%) scaleX(1)';
+					crosshairV.style.transform = 'translate(-50%, -50%) scaleY(1)';
+					centerDot.style.transform = 'translate(-50%, -50%) scale(1)';
 				}}, 10);
 
 				// Animate out and remove
 				setTimeout(() => {{
 					outerCircle.style.opacity = '0';
-					outerCircle.style.transform = 'scale(1.5)';
+					crosshairH.style.opacity = '0';
+					crosshairV.style.opacity = '0';
 					centerDot.style.opacity = '0';
 					setTimeout(() => container.remove(), 300);
 				}}, duration);
@@ -2641,6 +2687,18 @@ class BrowserSession(BaseModel):
 
 		except Exception as e:
 			self.logger.debug(f'[BrowserSession] Error closing extension options pages: {e}')
+
+	async def send_demo_mode_query(self, query: str) -> None:
+		"""Send the query/task to the in-browser demo panel if enabled."""
+		if not self.browser_profile.demo_mode:
+			return
+		demo = self.demo_mode
+		if not demo:
+			return
+		try:
+			await demo.send_query(query=query)
+		except Exception as exc:
+			self.logger.debug(f'[DemoMode] Failed to send query: {exc}')
 
 	async def send_demo_mode_log(self, message: str, level: str = 'info', metadata: dict[str, Any] | None = None) -> None:
 		"""Send a message to the in-browser demo panel if enabled."""

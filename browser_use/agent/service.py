@@ -1770,7 +1770,7 @@ class Agent(Generic[Context, AgentStructuredOutput]):
 			await on_step_start(self)
 
 		await self._demo_mode_log(
-			f'Starting step {step + 1}/{max_steps}',
+			f'Starting step {step + 1}',
 			'info',
 			{'step': step + 1, 'total_steps': max_steps},
 		)
@@ -1874,6 +1874,7 @@ class Agent(Generic[Context, AgentStructuredOutput]):
 			# Start browser session and attach watchdogs
 			await self.browser_session.start()
 			if self._demo_mode_enabled:
+				await self.browser_session.send_demo_mode_query(self.task)
 				await self._demo_mode_log(f'Started task: {self.task}', 'info', {'tag': 'task'})
 				await self._demo_mode_log(
 					'Demo mode active - follow the side panel for live thoughts and actions.',
